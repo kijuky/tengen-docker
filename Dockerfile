@@ -10,5 +10,10 @@ COPY tengen/package.json tengen/package-lock.json ./
 RUN npm ci --omit=dev
 COPY tengen/ ./
 
-# 既定は 127.0.0.1 バインドなのでコンテナでは 0.0.0.0 が必須
-ENTRYPOINT ["node", "src/tengen.ts", "serve", "--host", "0.0.0.0", "--port", "3000"]
+# ENTRYPOINT にサブコマンドを焼き込まない。
+# tengen には `serve` と `build-malicious-db` の 2 つのサブコマンドがあり、
+# `serve` を固定すると後者を実行できなくなる。
+ENTRYPOINT ["node", "src/tengen.ts"]
+
+# 既定は serve。コンテナでは 127.0.0.1 ではなく 0.0.0.0 にバインドする必要がある。
+CMD ["serve", "--host", "0.0.0.0", "--port", "3000"]
