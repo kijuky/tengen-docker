@@ -1,30 +1,31 @@
-# tengen-image
+# tengen-docker
 
-[m3dev/tengen](https://github.com/m3dev/tengen) のコンテナイメージ。上流を submodule `tengen/` としてコミット単位でピン留めする。
+[m3dev/tengen](https://github.com/m3dev/tengen) のコンテナイメージ。tengen は公式イメージも npm パッケージも Dockerfile も公開していないため、ここでビルドする。
 
-tengen は公式コンテナイメージも npm パッケージも公開しておらず、リポジトリに Dockerfile も無いため、ここでビルドして Gitea の内蔵コンテナレジストリに push する。
+上流は submodule `tengen/` としてコミット単位でピン留めする。現在はフォーク [kijuky/tengen](https://github.com/kijuky/tengen) の `feat/multiple-maven-upstreams-and-last-modified`（複数 Maven upstream、`Last-Modified` によるタイムスタンプ判定、Ivy レイアウト対応）。上流に取り込まれたら `.gitmodules` の url を `m3dev/tengen` に戻す。
 
-## ビルドと push
+## イメージ
 
-**OMV 上で実行する**（Mac は arm64、OMV は amd64）。submodule が必要なので `--recurse-submodules` を付ける。
-
-```sh
-cd /tmp && rm -rf tengen-image && git clone --recurse-submodules ssh://git@gitea.yasue1014.work:8090/kijuky/tengen-image.git && cd tengen-image && TAG=gitea.yasue1014.work/kijuky/tengen:$(git -C tengen rev-parse --short=12 HEAD)-$(git rev-parse --short=7 HEAD) && docker build -t $TAG . && docker push $TAG && echo "pushed: $TAG"
+```
+ghcr.io/kijuky/tengen:<上流コミット12桁>-<このリポジトリのコミット7桁>
 ```
 
-タグは `<上流コミット12桁>-<このリポジトリのコミット7桁>`。上流のバージョンと、Dockerfile を含むビルド定義の両方が一意に特定できる。
+タグは上流のバージョンとビルド定義の両方を一意に示す。Dockerfile だけを変えた場合もタグが変わる。`linux/amd64` と `linux/arm64`。
 
-## サブコマンド
+`main` への push と `workflow_dispatch` で [publish ワークフロー](.github/workflows/publish.yml)がビルドして push する。publish されたタグは job summary に出る。
 
-`ENTRYPOINT` は `node src/tengen.ts` までで、サブコマンドは焼き込んでいない。`serve` を固定すると `build-malicious-db` が実行できなくなるため。
+## 使い方
 
 ```sh
 # プロキシを動かす（CMD の既定）
-docker run --rm -p 3000:3000 <image>
+docker run --rm -p 3000:3000 ghcr.io/kijuky/tengen:<tag>
 
-# malicious DB を生成する（serve は --malicious-db-path に既存ファイルを要求するので、初回は先にこれ）
-docker run --rm -v /path/to/data:/data <image> build-malicious-db -o /data/malicious-db.json
+# malicious DB を生成する
+docker run --rm -v /path/to/data:/data ghcr.io/kijuky/tengen:<tag> \
+  build-malicious-db -o /data/malicious-db.json
 ```
+
+`ENTRYPOINT` にサブコマンドを焼き込んでいないため、`serve` と `build-malicious-db` のどちらも実行できる。`serve --malicious-db-path` は既存ファイルを要求するので、初回は `build-malicious-db` が先。
 
 ## 上流を更新する
 
@@ -32,8 +33,4 @@ docker run --rm -v /path/to/data:/data <image> build-malicious-db -o /data/malic
 git -C tengen fetch origin && git -C tengen checkout <new-sha> && git add tengen && git commit -m "bump tengen to <new-sha>" && git push
 ```
 
-更新後に上のビルド手順を再実行する。
-
-## 関連
-
-- タスク: Gitea `kijuky/tasks` の issue #77
+push するとワークフローが新しいタグで publish する。
