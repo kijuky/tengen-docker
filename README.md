@@ -2,7 +2,7 @@
 
 [m3dev/tengen](https://github.com/m3dev/tengen) のコンテナイメージ。tengen は公式イメージも npm パッケージも Dockerfile も公開していないため、ここでビルドする。
 
-上流は submodule `tengen/` としてコミット単位でピン留めする。現在はフォーク [kijuky/tengen](https://github.com/kijuky/tengen) の `develop`（`--registry` によるレジストリの宣言、Maven・Ivy のグループ、`Last-Modified` によるタイムスタンプ判定、公開 URL、ダウンロードのキャッシュ）。上流に取り込まれたら `.gitmodules` の url を `m3dev/tengen` に戻す。
+上流は submodule `tengen/` としてコミット単位でピン留めする。現在はフォーク [kijuky/tengen](https://github.com/kijuky/tengen) の `develop`（`--registry` によるレジストリの宣言、Maven・Ivy のグループ、`Last-Modified` によるタイムスタンプ判定（deps.dev がまだ載せていない Central の版も）、公開 URL、ダウンロードのキャッシュ）。上流に取り込まれたら `.gitmodules` の url を `m3dev/tengen` に戻す。
 
 ## イメージ
 
